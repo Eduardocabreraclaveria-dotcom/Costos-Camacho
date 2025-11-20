@@ -139,26 +139,27 @@
     <h1>Costos Camacho</h1>
     <div class="subtitle">
         Calculadora de precio para servicios de packing.<br>
-        Ingresa todos los costos y tu utilidad neta deseada.
+        Ingrese todos los costos y la utilidad neta deseada.
     </div>
 
-    <label for="costo">Costo base</label>
+    <!-- NUEVO ORDEN -->
+    <label for="costo">Costo Fruta</label>
     <input type="number" id="costo" placeholder="Ej: 70000">
 
-    <label for="costoEnvase">Costo de envase</label>
+    <label for="utilNeta">Utilidad NETA deseada</label>
+    <input type="number" id="utilNeta" placeholder="Ej: 50000">
+
+    <label for="costoTransporte">Costo de Transporte</label>
+    <input type="number" id="costoTransporte" placeholder="Ej: 8000">
+
+    <label for="costoEnvase">Costo de Envase</label>
     <input type="number" id="costoEnvase" placeholder="Ej: 5000">
 
-    <label for="costoTransporte">Costo transporte</label>
-    <input type="number" id="costoTransporte" placeholder="Ej: 8000">
+    <label for="costoPallet">Costo de Palletizado</label>
+    <input type="number" id="costoPallet" placeholder="Ej: 3000">
 
     <label for="costoCamara">Costo Cámara de Frío</label>
     <input type="number" id="costoCamara" placeholder="Ej: 12000">
-
-    <label for="costoPallet">Costo Palletizado</label>
-    <input type="number" id="costoPallet" placeholder="Ej: 3000">
-
-    <label for="utilNeta">Utilidad NETa deseada</label>
-    <input type="number" id="utilNeta" placeholder="Ej: 50000">
 
     <div class="row">
         <div>
@@ -230,12 +231,12 @@ function formatoPorcentaje(valor) {
 
 function calcular() {
     const costo = parseFloat(document.getElementById('costo').value) || 0;
-    const costoEnvase = parseFloat(document.getElementById('costoEnvase').value) || 0;
-    const costoTransporte = parseFloat(document.getElementById('costoTransporte').value) || 0;
-    const costoCamara = parseFloat(document.getElementById('costoCamara').value) || 0;
-    const costoPallet = parseFloat(document.getElementById('costoPallet').value) || 0;
-
     const utilNeta = parseFloat(document.getElementById('utilNeta').value);
+    const costoTransporte = parseFloat(document.getElementById('costoTransporte').value) || 0;
+    const costoEnvase = parseFloat(document.getElementById('costoEnvase').value) || 0;
+    const costoPallet = parseFloat(document.getElementById('costoPallet').value) || 0;
+    const costoCamara = parseFloat(document.getElementById('costoCamara').value) || 0;
+
     const ir = parseFloat(document.getElementById('ir').value);
     const iva = parseFloat(document.getElementById('iva').value);
 
@@ -244,8 +245,8 @@ function calcular() {
     errorDiv.textContent = "";
     resultsDiv.style.display = "none";
 
-    if (isNaN(utilNeta) || isNaN(ir) || isNaN(iva)) {
-        errorDiv.textContent = "Completa utilidad neta, IR e IVA.";
+    if (isNaN(utilNeta)) {
+        errorDiv.textContent = "Debe ingresar utilidad neta deseada.";
         return;
     }
 
@@ -275,7 +276,7 @@ function calcular() {
     resultsDiv.style.display = "block";
 }
 
-// Registrar Service Worker
+// Registrar SW
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
         navigator.serviceWorker.register("sw.js");
