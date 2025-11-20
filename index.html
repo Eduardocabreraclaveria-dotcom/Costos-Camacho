@@ -129,6 +129,11 @@
             font-size: 0.75rem;
             color: #888;
         }
+        
+        .hint {
+            font-size: 0.75rem;
+            color: #777;
+        }
     </style>
 </head>
 <body>
@@ -149,17 +154,21 @@
     <label for="utilNeta">Utilidad NETA deseada</label>
     <input type="number" id="utilNeta" placeholder="Ej: 50000">
 
-    <label for="costoTransporte">Costo de Transporte</label>
-    <input type="number" id="costoTransporte" placeholder="Ej: 8000">
+    <label for="costoTransporte">Costo de Transporte (con IVA)</label>
+    <input type="number" id="costoTransporte" placeholder="Ej: 11900">
+    <div class="hint">Ingresar valor con IVA incluido.</div>
 
-    <label for="costoEnvase">Costo de Envase</label>
-    <input type="number" id="costoEnvase" placeholder="Ej: 5000">
+    <label for="costoEnvase">Costo de Envase (con IVA)</label>
+    <input type="number" id="costoEnvase" placeholder="Ej: 5950">
+    <div class="hint">Ingresar valor con IVA incluido.</div>
 
-    <label for="costoPallet">Costo de Palletizado</label>
-    <input type="number" id="costoPallet" placeholder="Ej: 3000">
+    <label for="costoPallet">Costo de Palletizado (con IVA)</label>
+    <input type="number" id="costoPallet" placeholder="Ej: 3570">
+    <div class="hint">Ingresar valor con IVA incluido.</div>
 
-    <label for="costoCamara">Costo Cámara de Frío</label>
-    <input type="number" id="costoCamara" placeholder="Ej: 12000">
+    <label for="costoCamara">Costo Cámara de Frío (con IVA)</label>
+    <input type="number" id="costoCamara" placeholder="Ej: 23800">
+    <div class="hint">Ingresar valor con IVA incluido.</div>
 
     <div class="row">
         <div>
@@ -179,7 +188,7 @@
     <div id="results" class="results" style="display:none;">
 
         <div class="result-line">
-            <div class="result-label">Costo total considerado:</div>
+            <div class="result-label">Costo total considerado (sin IVA):</div>
             <div class="result-value" id="costoTotal"></div>
         </div>
 
@@ -194,7 +203,7 @@
         </div>
 
         <div class="result-line">
-            <div class="result-label">IVA:</div>
+            <div class="result-label">IVA sobre precio:</div>
             <div class="result-value" id="montoIVA"></div>
         </div>
 
@@ -230,12 +239,13 @@ function formatoPorcentaje(valor) {
 }
 
 function calcular() {
-    const costo = parseFloat(document.getElementById('costo').value) || 0;
+    const costoFruta = parseFloat(document.getElementById('costo').value) || 0;
     const utilNeta = parseFloat(document.getElementById('utilNeta').value);
-    const costoTransporte = parseFloat(document.getElementById('costoTransporte').value) || 0;
-    const costoEnvase = parseFloat(document.getElementById('costoEnvase').value) || 0;
-    const costoPallet = parseFloat(document.getElementById('costoPallet').value) || 0;
-    const costoCamara = parseFloat(document.getElementById('costoCamara').value) || 0;
+
+    const costoTransporteBruto = parseFloat(document.getElementById('costoTransporte').value) || 0;
+    const costoEnvaseBruto = parseFloat(document.getElementById('costoEnvase').value) || 0;
+    const costoPalletBruto = parseFloat(document.getElementById('costoPallet').value) || 0;
+    const costoCamaraBruto = parseFloat(document.getElementById('costoCamara').value) || 0;
 
     const ir = parseFloat(document.getElementById('ir').value);
     const iva = parseFloat(document.getElementById('iva').value);
@@ -250,15 +260,34 @@ function calcular() {
         return;
     }
 
-    const costoTotal = costo + costoEnvase + costoTransporte + costoCamara + costoPallet;
-
-    if (costoTotal <= 0) {
-        errorDiv.textContent = "El costo total debe ser mayor a 0.";
+    if (isNaN(ir) || isNaN(iva)) {
+        errorDiv.textContent = "Debe ingresar % Impuesto Renta y % IVA.";
         return;
     }
 
     const tasaIR = ir / 100;
     const tasaIVA = iva / 100;
+
+    if (tasaIVA <= 0) {
+        errorDiv.textContent = "El % IVA debe ser mayor a 0 para descontarlo de los costos.";
+        return;
+    }
+
+    // Descontar IVA de los costos que vienen con IVA
+    const divisorIVA = 1 + tasaIVA;
+
+    const costoTransporteNeto = costoTransporteBruto / divisorIVA;
+    const costoEnvaseNeto = costoEnvaseBruto / divisorIVA;
+    const costoPalletNeto = costoPalletBruto / divisorIVA;
+    const costoCamaraNeto = costoCamaraBruto / divisorIVA;
+
+    // Costo total sin IVA
+    const costoTotal = costoFruta + costoTransporteNeto + costoEnvaseNeto + costoPalletNeto + costoCamaraNeto;
+
+    if (costoTotal <= 0) {
+        errorDiv.textContent = "El costo total debe ser mayor a 0.";
+        return;
+    }
 
     const utilBruta = utilNeta / (1 - tasaIR);
     const precioNeto = costoTotal + utilBruta;
