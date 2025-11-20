@@ -139,19 +139,25 @@
     <h1>Costos Camacho</h1>
     <div class="subtitle">
         Calculadora de precio para servicios de packing.<br>
-        Ingresa tu costo, costos adicionales y la utilidad neta que quieres lograr.
+        Ingresa todos los costos y tu utilidad neta deseada.
     </div>
 
-    <label for="costo">Costo base (por lote / kilo / unidad)</label>
+    <label for="costo">Costo base</label>
     <input type="number" id="costo" placeholder="Ej: 70000">
 
     <label for="costoEnvase">Costo de envase</label>
     <input type="number" id="costoEnvase" placeholder="Ej: 5000">
 
-    <label for="costoTransporte">Costo de transporte</label>
+    <label for="costoTransporte">Costo transporte</label>
     <input type="number" id="costoTransporte" placeholder="Ej: 8000">
 
-    <label for="utilNeta">Utilidad NETa deseada (después de impuesto)</label>
+    <label for="costoCamara">Costo Cámara de Frío</label>
+    <input type="number" id="costoCamara" placeholder="Ej: 12000">
+
+    <label for="costoPallet">Costo Palletizado</label>
+    <input type="number" id="costoPallet" placeholder="Ej: 3000">
+
+    <label for="utilNeta">Utilidad NETa deseada</label>
     <input type="number" id="utilNeta" placeholder="Ej: 50000">
 
     <div class="row">
@@ -170,31 +176,38 @@
     <div id="error" class="error"></div>
 
     <div id="results" class="results" style="display:none;">
+
         <div class="result-line">
             <div class="result-label">Costo total considerado:</div>
             <div class="result-value" id="costoTotal"></div>
         </div>
+
         <div class="result-line">
-            <div class="result-label">Utilidad bruta necesaria (con impuesto):</div>
+            <div class="result-label">Utilidad bruta necesaria:</div>
             <div class="result-value" id="utilBruta"></div>
         </div>
+
         <div class="result-line">
-            <div class="result-label">Precio NETO mínimo a facturar:</div>
+            <div class="result-label">Precio NETO mínimo:</div>
             <div class="result-value" id="precioNeto"></div>
         </div>
+
         <div class="result-line">
             <div class="result-label">IVA:</div>
             <div class="result-value" id="montoIVA"></div>
         </div>
+
         <div class="result-line">
             <div class="result-label">Precio TOTAL al cliente:</div>
             <div class="result-value" id="precioTotal"></div>
         </div>
+
         <div class="result-line">
-            <div class="result-label">Margen sobre costo total (% aprox.):</div>
+            <div class="result-label">Margen (% sobre costo total):</div>
             <div class="result-value" id="margen"></div>
         </div>
-        <small>Todos los valores están expresados en la misma unidad del costo (CLP u otra).</small>
+
+        <small>Valores expresados en la misma unidad del costo.</small>
     </div>
 
     <div class="app-footer">
@@ -204,7 +217,6 @@
 
 <script>
 function formatoMoneda(valor) {
-    if (isNaN(valor)) return "-";
     return new Intl.NumberFormat('es-CL', {
         style: 'currency',
         currency: 'CLP',
@@ -213,7 +225,6 @@ function formatoMoneda(valor) {
 }
 
 function formatoPorcentaje(valor) {
-    if (isNaN(valor)) return "-";
     return valor.toFixed(1) + " %";
 }
 
@@ -221,6 +232,9 @@ function calcular() {
     const costo = parseFloat(document.getElementById('costo').value) || 0;
     const costoEnvase = parseFloat(document.getElementById('costoEnvase').value) || 0;
     const costoTransporte = parseFloat(document.getElementById('costoTransporte').value) || 0;
+    const costoCamara = parseFloat(document.getElementById('costoCamara').value) || 0;
+    const costoPallet = parseFloat(document.getElementById('costoPallet').value) || 0;
+
     const utilNeta = parseFloat(document.getElementById('utilNeta').value);
     const ir = parseFloat(document.getElementById('ir').value);
     const iva = parseFloat(document.getElementById('iva').value);
@@ -231,24 +245,19 @@ function calcular() {
     resultsDiv.style.display = "none";
 
     if (isNaN(utilNeta) || isNaN(ir) || isNaN(iva)) {
-        errorDiv.textContent = "Por favor completa al menos utilidad neta, % IR y % IVA.";
+        errorDiv.textContent = "Completa utilidad neta, IR e IVA.";
         return;
     }
 
-    const costoTotal = costo + costoEnvase + costoTransporte;
+    const costoTotal = costo + costoEnvase + costoTransporte + costoCamara + costoPallet;
 
     if (costoTotal <= 0) {
-        errorDiv.textContent = "El costo total debe ser mayor a 0 (suma de costo base, envase y transporte).";
+        errorDiv.textContent = "El costo total debe ser mayor a 0.";
         return;
     }
 
     const tasaIR = ir / 100;
     const tasaIVA = iva / 100;
-
-    if (tasaIR >= 1 || tasaIR < 0) {
-        errorDiv.textContent = "Revisa el porcentaje de Impuesto a la Renta.";
-        return;
-    }
 
     const utilBruta = utilNeta / (1 - tasaIR);
     const precioNeto = costoTotal + utilBruta;
@@ -269,9 +278,7 @@ function calcular() {
 // Registrar Service Worker
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js").catch(err => {
-            console.log("SW registration failed:", err);
-        });
+        navigator.serviceWorker.register("sw.js");
     });
 }
 </script>
