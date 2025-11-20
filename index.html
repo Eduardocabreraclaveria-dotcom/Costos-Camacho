@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Costos Camacho - Calculadora Packing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 1.5rem;
+            background: #f5f5f5;
+        }
+
+        .card {
+            max-width: 480px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            background: #ffffff;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .logo-container img {
+            max-width: 70%;
+            height: auto;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            text-align: center;
+            color: #7b4a25;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+            margin-top: 0.75rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.5rem 0.6rem;
+            box-sizing: border-box;
+            border-radius: 0.4rem;
+            border: 1px solid #ccc;
+            font-size: 0.95rem;
+        }
+
+        .row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .row > div {
+            flex: 1;
+        }
+
+        button {
+            margin-top: 1rem;
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: 0.6rem;
+            border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            background: #4CAF50;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        button:active {
+            transform: scale(0.99);
+        }
+
+        .results {
+            margin-top: 1.25rem;
+            border-top: 1px solid #eee;
+            padding-top: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .result-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+        }
+
+        .result-label {
+            color: #555;
+        }
+
+        .result-value {
+            font-weight: 600;
+        }
+
+        .error {
+            color: #b00020;
+            font-size: 0.85rem;
+            margin-top: 0.4rem;
+        }
+
+        small {
+            font-size: 0.8rem;
+            color: #777;
+        }
+
+        .app-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="logo-container">
+        <img src="icons/icon-512.png" alt="Camacho Agrocomercial">
+    </div>
+    <h1>Costos Camacho</h1>
+    <div class="subtitle">
+        Calculadora de precio para servicios de packing.<br>
+        Ingresa tu costo y la utilidad neta que quieres lograr.
+    </div>
+
+    <label for="costo">Costo (por lote / kilo / unidad)</label>
+    <input type="number" id="costo" placeholder="Ej: 70000">
+
+    <label for="utilNeta">Utilidad NETa deseada (después de impuesto)</label>
+    <input type="number" id="utilNeta" placeholder="Ej: 50000">
+
+    <div class="row">
+        <div>
+            <label for="ir">% Impuesto Renta</label>
+            <input type="number" id="ir" value="27" step="0.01">
+        </div>
+        <div>
+            <label for="iva">% IVA</label>
+            <input type="number" id="iva" value="19" step="0.01">
+        </div>
+    </div>
+
+    <button onclick="calcular()">Calcular precio</button>
+
+    <div id="error" class="error"></div>
+
+    <div id="results" class="results" style="display:none;">
+        <div class="result-line">
+            <div class="result-label">Utilidad bruta necesaria (con impuesto):</div>
+            <div class="result-value" id="utilBruta"></div>
+        </div>
+        <div class="result-line">
+            <div class="result-label">Precio NETO mínimo a facturar:</div>
+            <div class="result-value" id="precioNeto"></div>
+        </div>
+        <div class="result-line">
+            <div class="result-label">IVA:</div>
+            <div class="result-value" id="montoIVA"></div>
+        </div>
+        <div class="result-line">
+            <div class="result-label">Precio TOTAL al cliente:</div>
+            <div class="result-value" id="precioTotal"></div>
+        </div>
+        <div class="result-line">
+            <div class="result-label">Margen sobre costo (% aprox.):</div>
+            <div class="result-value" id="margen"></div>
+        </div>
+        <small>Todos los valores están expresados en la misma unidad del costo (CLP u otra).</small>
+    </div>
+
+    <div class="app-footer">
+        Costos Camacho · Calculadora Packing
+    </div>
+</div>
+
+<script>
+function formatoMoneda(valor) {
+    if (isNaN(valor)) return "-";
+    return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP',
+        maximumFractionDigits: 0
+    }).format(valor);
+}
+
+function formatoPorcentaje(valor) {
+    if (isNaN(valor)) return "-";
+    return valor.toFixed(1) + " %";
+}
+
+function calcular() {
+    const costo = parseFloat(document.getElementById('costo').value);
+    const utilNeta = parseFloat(document.getElementById('utilNeta').value);
+    const ir = parseFloat(document.getElementById('ir').value);
+    const iva = parseFloat(document.getElementById('iva').value);
+
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    errorDiv.textContent = "";
+    resultsDiv.style.display = "none";
+
+    if (isNaN(costo) || isNaN(utilNeta) || isNaN(ir) || isNaN(iva)) {
+        errorDiv.textContent = "Por favor completa todos los campos con números válidos.";
+        return;
+    }
+
+    const tasaIR = ir / 100;
+    const tasaIVA = iva / 100;
+
+    if (tasaIR >= 1 || tasaIR < 0) {
+        errorDiv.textContent = "Revisa el porcentaje de Impuesto a la Renta.";
+        return;
+    }
+
+    const utilBruta = utilNeta / (1 - tasaIR);
+    const precioNeto = costo + utilBruta;
+    const montoIVA = precioNeto * tasaIVA;
+    const precioTotal = precioNeto + montoIVA;
+    const margen = (utilBruta / costo) * 100;
+
+    document.getElementById('utilBruta').textContent = formatoMoneda(utilBruta);
+    document.getElementById('precioNeto').textContent = formatoMoneda(precioNeto);
+    document.getElementById('montoIVA').textContent = formatoMoneda(montoIVA);
+    document.getElementById('precioTotal').textContent = formatoMoneda(precioTotal);
+    document.getElementById('margen').textContent = formatoPorcentaje(margen);
+
+    resultsDiv.style.display = "block";
+}
+
+// Registrar Service Worker
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(err => {
+            console.log("SW registration failed:", err);
+        });
+    });
+}
+</script>
+</body>
+</html>
